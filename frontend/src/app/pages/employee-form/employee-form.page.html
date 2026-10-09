@@ -1,0 +1,94 @@
+<a mat-button class="back" [routerLink]="isEdit() ? ['/employees', id()] : ['/employees']">
+  ‹ {{ isEdit() ? 'Back to ' + (original()?.name ?? 'employee') : 'Back to employees' }}
+</a>
+
+<header class="ph">
+  <div>
+    <h1>{{ isEdit() ? 'Edit employee' : 'Add employee' }}</h1>
+    <p class="sub">
+      {{ isEdit() ? 'Update the details below. The Annual Salary replaces the current amount.'
+                  : 'Annual Salary is the gross base amount for a full-time employee, in local currency.' }}
+    </p>
+  </div>
+</header>
+
+@if (loading()) {
+  <div class="spinner-row" role="status">Loading…</div>
+} @else {
+  <form class="panel" [formGroup]="form" (ngSubmit)="submit()" novalidate>
+    <div class="bd">
+      @if (error()) { <div class="banner" role="alert">{{ error() }}</div> }
+
+      <div class="form">
+        <mat-form-field appearance="outline">
+          <mat-label>Full name</mat-label>
+          <input matInput formControlName="name" autocomplete="off" />
+          <mat-error>{{ message('name') }}</mat-error>
+        </mat-form-field>
+
+        <mat-form-field appearance="outline">
+          <mat-label>Employee ID</mat-label>
+          <input matInput formControlName="employee_code" class="mono" autocomplete="off" />
+          <mat-hint>Must be unique, like ACME-10001.</mat-hint>
+          <mat-error>{{ message('employee_code') }}</mat-error>
+        </mat-form-field>
+
+        <mat-form-field appearance="outline">
+          <mat-label>Email</mat-label>
+          <input matInput type="email" formControlName="email" autocomplete="off" />
+          <mat-error>{{ message('email') }}</mat-error>
+        </mat-form-field>
+
+        <mat-form-field appearance="outline">
+          <mat-label>Country</mat-label>
+          <mat-select formControlName="country_code">
+            @for (c of lookups()?.countries ?? []; track c.code) { <mat-option [value]="c.code">{{ c.name }}</mat-option> }
+          </mat-select>
+          <mat-error>{{ message('country_code') }}</mat-error>
+        </mat-form-field>
+
+        <mat-form-field appearance="outline">
+          <mat-label>Department</mat-label>
+          <mat-select formControlName="department_id">
+            @for (d of lookups()?.departments ?? []; track d.id) { <mat-option [value]="d.id">{{ d.name }}</mat-option> }
+          </mat-select>
+          <mat-error>{{ message('department_id') }}</mat-error>
+        </mat-form-field>
+
+        <mat-form-field appearance="outline">
+          <mat-label>Job Title</mat-label>
+          <mat-select formControlName="job_title_id">
+            @for (t of titles(); track t.id) { <mat-option [value]="t.id">{{ t.name }}</mat-option> }
+          </mat-select>
+          @if (titles().length === 0) { <mat-hint>Choose a department first.</mat-hint> }
+          <mat-error>{{ message('job_title_id') }}</mat-error>
+        </mat-form-field>
+
+        <div>
+          <div class="salrow">
+            <mat-form-field appearance="outline">
+              <mat-label>Annual Salary</mat-label>
+              <input matInput type="number" inputmode="numeric" min="1" step="1" formControlName="salary_amount" />
+              <mat-hint>{{ usdHint() }}</mat-hint>
+              <mat-error>{{ salaryMessage() }}</mat-error>
+            </mat-form-field>
+            <mat-form-field appearance="outline">
+              <mat-label>Currency</mat-label>
+              <mat-select formControlName="currency">
+                @for (c of lookups()?.currencies ?? []; track c.code) { <mat-option [value]="c.code">{{ c.code }}</mat-option> }
+              </mat-select>
+            </mat-form-field>
+          </div>
+          @if (form.errors?.['implausible'] && (form.controls.salary_amount.touched || form.controls.salary_amount.dirty)) {
+            <p class="banner" role="alert">{{ salaryMessage() }}</p>
+          }
+        </div>
+      </div>
+
+      <div class="actions">
+        <button mat-flat-button type="submit" [disabled]="saving()">{{ isEdit() ? 'Save changes' : 'Add employee' }}</button>
+        <a mat-button [routerLink]="isEdit() ? ['/employees', id()] : ['/employees']">Cancel</a>
+      </div>
+    </div>
+  </form>
+}

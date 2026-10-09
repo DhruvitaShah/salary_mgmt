@@ -1,0 +1,52 @@
+<a mat-button routerLink="/employees" class="back">‹ Back to employees</a>
+
+@if (error()) {
+  <div class="banner" role="alert">{{ error() }}</div>
+} @else if (!employee()) {
+  <div class="spinner-row" role="status">Loading employee…</div>
+} @else {
+  @let e = employee()!;
+  <header class="ph">
+    <div>
+      <h1>{{ e.name }}</h1>
+      <p class="sub"><span class="mono">{{ e.employee_code }}</span> · {{ e.email }}</p>
+    </div>
+    <a mat-flat-button [routerLink]="['/employees', e.id, 'edit']">Edit employee</a>
+  </header>
+
+  <div class="dgrid">
+    <div class="stack">
+      <section class="panel">
+        <div class="hd hd-row">
+          <h2>Annual Salary</h2>
+          <mat-form-field appearance="outline" subscriptSizing="dynamic" class="picker">
+            <mat-label>Show salary in</mat-label>
+            <mat-select [value]="view()" (selectionChange)="view.set($event.value)">
+              <mat-option value="">Local ({{ e.currency }})</mat-option>
+              @for (c of rc.options(); track c) { @if (c !== e.currency) { <mat-option [value]="c">{{ c }}</mat-option> } }
+            </mat-select>
+          </mat-form-field>
+        </div>
+        <div class="bd">
+          <div class="big">{{ shownAmount() }}</div>
+          @if (converted()) {
+            <p class="sub">per year, gross base, {{ shownCurrency() }} · converted at the fixed rate from {{ e.salary_amount | money: e.currency }}</p>
+          } @else {
+            <p class="sub">per year, gross base, {{ e.currency }}@if (e.currency !== 'USD') { · ≈ {{ e.salary_usd | money: 'USD' }} }</p>
+          }
+        </div>
+      </section>
+      <section class="panel">
+        <div class="hd"><h2>Employee Information</h2></div>
+        <div class="bd">
+          <dl class="facts">
+            <dt>Department</dt><dd>{{ e.department.name }}</dd>
+            <dt>Job Title</dt><dd>{{ e.job_title.name }}</dd>
+            <dt>Country</dt><dd>{{ e.country_name }}</dd>
+            <dt>Currency</dt><dd>{{ e.currency }}</dd>
+          </dl>
+        </div>
+      </section>
+    </div>
+  </div>
+}

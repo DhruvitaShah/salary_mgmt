@@ -1,0 +1,86 @@
+<header class="ph">
+  <div>
+    <h1>Employees</h1>
+    <p class="sub">{{ meta().total | number }} {{ hasFilters ? 'matching employees' : 'employees' }}</p>
+  </div>
+  <a mat-flat-button routerLink="/employees/new">Add employee</a>
+</header>
+
+<section class="filters" aria-label="Filters">
+  <mat-form-field appearance="outline" class="search" subscriptSizing="dynamic">
+    <mat-label>Search</mat-label>
+    <input matInput type="search" placeholder="Name, employee ID or email" autocomplete="off"
+           [ngModel]="q()" (ngModelChange)="onSearch($event)" />
+  </mat-form-field>
+  <mat-form-field appearance="outline" subscriptSizing="dynamic">
+    <mat-label>Country</mat-label>
+    <mat-select [value]="country()" (selectionChange)="onCountry($event.value)">
+      <mat-option value="">All countries</mat-option>
+      @for (c of lookups()?.countries ?? []; track c.code) { <mat-option [value]="c.code">{{ c.name }}</mat-option> }
+    </mat-select>
+  </mat-form-field>
+  <mat-form-field appearance="outline" subscriptSizing="dynamic">
+    <mat-label>Department</mat-label>
+    <mat-select [value]="departmentId()" (selectionChange)="onDepartment($event.value)">
+      <mat-option value="">All departments</mat-option>
+      @for (d of lookups()?.departments ?? []; track d.id) { <mat-option [value]="d.id">{{ d.name }}</mat-option> }
+    </mat-select>
+  </mat-form-field>
+  <mat-form-field appearance="outline" subscriptSizing="dynamic">
+    <mat-label>Job Title</mat-label>
+    <mat-select [value]="jobTitleId()" (selectionChange)="onTitle($event.value)">
+      <mat-option value="">All job titles</mat-option>
+      @for (t of titleOptions(); track t.id) { <mat-option [value]="t.id">{{ t.name }}</mat-option> }
+    </mat-select>
+  </mat-form-field>
+  @if (hasFilters) { <button mat-button type="button" class="clear" (click)="clear()">Clear filters</button> }
+</section>
+
+@if (error()) { <div class="banner" role="alert">{{ error() }}</div> }
+
+<section class="panel" [attr.aria-busy]="loading()">
+  @if (!loading() && rows().length === 0 && !error()) {
+    @if (hasFilters) {
+      <div class="empty"><b>No employees found</b>Try changing your filters.</div>
+    } @else {
+      <div class="empty"><b>No employees yet</b>Use Add employee to create the first record.</div>
+    }
+  } @else {
+    <div class="tblwrap">
+      <table class="data" matSort [matSortActive]="sort().active" [matSortDirection]="sort().direction"
+             matSortDisableClear (matSortChange)="onSort($event)">
+        <thead>
+          <tr>
+            <th mat-sort-header="name">Employee</th>
+            <th mat-sort-header="employee_code" class="hide-m">Employee ID</th>
+            <th mat-sort-header="department" class="hide-m">Department</th>
+            <th mat-sort-header="job_title" class="hide-m">Job Title</th>
+            <th mat-sort-header="country" class="hide-m">Country</th>
+            <th mat-sort-header="salary" class="r" arrowPosition="before">Annual Salary</th>
+          </tr>
+        </thead>
+        <tbody>
+          @for (e of rows(); track e.id) {
+            <tr class="click" tabindex="0" (click)="open(e)" (keydown.enter)="open(e)">
+              <td>
+                <div class="nm">{{ e.name }}</div>
+                <div class="em hide-m">{{ e.email }}</div>
+                <div class="m-only">{{ e.job_title.name }} · {{ e.country_name }}</div>
+              </td>
+              <td class="hide-m mono">{{ e.employee_code }}</td>
+              <td class="hide-m">{{ e.department.name }}</td>
+              <td class="hide-m">{{ e.job_title.name }}</td>
+              <td class="hide-m">{{ e.country_name }}</td>
+              <td class="r">
+                {{ e.salary_amount | money: e.currency }}
+                @if (e.currency !== 'USD') { <div class="em">≈ {{ e.salary_usd | money: 'USD' }}</div> }
+              </td>
+            </tr>
+          }
+        </tbody>
+      </table>
+    </div>
+    <mat-paginator [length]="meta().total" [pageSize]="pageSize()" [pageIndex]="pageIndex()"
+                   [pageSizeOptions]="[25, 50, 100]" showFirstLastButtons (page)="onPage($event)" />
+  }
+</section>

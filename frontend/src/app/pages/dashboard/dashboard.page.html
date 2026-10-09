@@ -1,0 +1,91 @@
+<header class="ph">
+  <div>
+    <h1>Dashboard</h1>
+    <p class="sub">Organisation-wide overview. Select any bar to see those employees.</p>
+  </div>
+  <app-currency-picker />
+</header>
+
+@if (error()) {
+  <div class="banner" role="alert">{{ error() }}</div>
+} @else if (!data()) {
+  <div class="spinner-row" role="status">Loading dashboard…</div>
+} @else {
+  @let d = data()!;
+  <section class="panel kpis" aria-label="Key figures">
+    <div class="kpi"><span>Employees</span><b>{{ d.summary.employee_count | number }}</b></div>
+    <div class="kpi"><span>Total salary cost</span><b>{{ rc.compact(d.summary.total_cost) }}</b></div>
+    <div class="kpi"><span>Average salary</span><b>{{ rc.compact(d.summary.average) }}</b></div>
+    <div class="kpi"><span>Median salary</span><b>{{ rc.compact(d.summary.median) }}</b></div>
+    <div class="kpi"><span>Countries</span><b>{{ d.summary.country_count }}</b></div>
+    <div class="kpi"><span>Departments</span><b>{{ d.summary.department_count }}</b></div>
+  </section>
+
+  <div class="grid2">
+    <section class="panel">
+      <div class="hd">
+        <h2>Average salary by country</h2>
+        <div class="legend"><span><i class="lg-bar"></i>Average</span><span><i class="lg-tick"></i>Median</span><span>Annual, in {{ rc.code() }} at fixed rates</span></div>
+      </div>
+      <div class="bd">
+        <div class="blist">
+          @for (row of d.by_country; track row.key) {
+            <button type="button" class="brow" (click)="openCountry(row)">
+              <span class="lb">{{ row.name }}<small>{{ row.employee_count | number }} employees</small></span>
+              <app-salary-bar [average]="row.average" [median]="row.median" [scale]="salaryScale()" [label]="salaryLabel(row)" />
+              <span class="v">{{ rc.compact(row.average) }}</span>
+            </button>
+          }
+        </div>
+      </div>
+    </section>
+
+    <section class="panel">
+      <div class="hd">
+        <h2>Average salary by department</h2>
+        <div class="legend"><span><i class="lg-bar"></i>Average</span><span><i class="lg-tick"></i>Median</span><span>Annual, in {{ rc.code() }} at fixed rates</span></div>
+      </div>
+      <div class="bd">
+        <div class="blist">
+          @for (row of d.by_department; track row.key) {
+            <button type="button" class="brow" (click)="openDepartment(row)">
+              <span class="lb">{{ row.name }}<small>{{ row.employee_count | number }} employees</small></span>
+              <app-salary-bar [average]="row.average" [median]="row.median" [scale]="salaryScale()" [label]="salaryLabel(row)" />
+              <span class="v">{{ rc.compact(row.average) }}</span>
+            </button>
+          }
+        </div>
+      </div>
+    </section>
+
+    <section class="panel">
+      <div class="hd"><h2>Employees by country</h2></div>
+      <div class="bd">
+        <div class="blist">
+          @for (row of countByCountry(); track row.key) {
+            <button type="button" class="brow" (click)="openCountry(row)">
+              <span class="lb">{{ row.name }}</span>
+              <app-salary-bar [average]="row.employee_count" [scale]="countScale()" [label]="row.name + ': ' + row.employee_count + ' employees'" />
+              <span class="v">{{ row.employee_count | number }}</span>
+            </button>
+          }
+        </div>
+      </div>
+    </section>
+
+    <section class="panel">
+      <div class="hd"><h2>Employees by department</h2></div>
+      <div class="bd">
+        <div class="blist">
+          @for (row of countByDepartment(); track row.key) {
+            <button type="button" class="brow" (click)="openDepartment(row)">
+              <span class="lb">{{ row.name }}</span>
+              <app-salary-bar [average]="row.employee_count" [scale]="countScale()" [label]="row.name + ': ' + row.employee_count + ' employees'" />
+              <span class="v">{{ row.employee_count | number }}</span>
+            </button>
+          }
+        </div>
+      </div>
+    </section>
+  </div>
+}

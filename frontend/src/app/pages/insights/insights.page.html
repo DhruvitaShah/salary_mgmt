@@ -1,0 +1,167 @@
+<header class="ph">
+  <div>
+    <h1>Salary Insights</h1>
+    <p class="sub">Compare pay across countries, departments and job titles. Annual gross base salary, converted at fixed rates.</p>
+  </div>
+  <app-currency-picker />
+</header>
+
+<section class="filters" aria-label="Filters">
+  <mat-form-field appearance="outline" subscriptSizing="dynamic">
+    <mat-label>Country</mat-label>
+    <mat-select [value]="country()" (selectionChange)="setCountry($event.value)">
+      <mat-option value="">All countries</mat-option>
+      @for (c of lookups()?.countries ?? []; track c.code) { <mat-option [value]="c.code">{{ c.name }}</mat-option> }
+    </mat-select>
+  </mat-form-field>
+  <mat-form-field appearance="outline" subscriptSizing="dynamic">
+    <mat-label>Department</mat-label>
+    <mat-select [value]="departmentId()" (selectionChange)="setDepartment($event.value)">
+      <mat-option value="">All departments</mat-option>
+      @for (d of lookups()?.departments ?? []; track d.id) { <mat-option [value]="d.id">{{ d.name }}</mat-option> }
+    </mat-select>
+  </mat-form-field>
+  <mat-form-field appearance="outline" subscriptSizing="dynamic">
+    <mat-label>Job Title</mat-label>
+    <mat-select [value]="jobTitleId()" (selectionChange)="setJobTitle($event.value)">
+      <mat-option value="">All job titles</mat-option>
+      @for (t of titleOptions(); track t.id) { <mat-option [value]="t.id">{{ t.name }}</mat-option> }
+    </mat-select>
+  </mat-form-field>
+  <div>
+    <span class="seg-label" id="view-label">View</span>
+    <mat-button-toggle-group aria-labelledby="view-label" [value]="tab()" (change)="setTab($event.value)" hideSingleSelectionIndicator>
+      @for (t of tabs; track t.key) { <mat-button-toggle [value]="t.key">{{ t.label }}</mat-button-toggle> }
+    </mat-button-toggle-group>
+  </div>
+</section>
+
+@if (error()) { <div class="banner" role="alert">{{ error() }}</div> }
+
+@if (summary(); as s) {
+  <section class="panel kpis four" aria-label="Summary of the current selection" [attr.aria-busy]="loading()">
+    <div class="kpi"><span>Employees</span><b>{{ s.employee_count | number }}</b></div>
+    <div class="kpi"><span>Total annual cost</span><b>{{ rc.compact(s.total_cost) }}</b></div>
+    <div class="kpi"><span>Average</span><b>{{ rc.compact(s.average) }}</b></div>
+    <div class="kpi"><span>Median</span><b>{{ rc.compact(s.median) }}</b></div>
+  </section>
+
+  @if (s.employee_count === 0) {
+    <div class="panel empty"><b>No employees in this selection</b>Choose a different country or department.</div>
+  } @else {
+    @switch (tab()) {
+      @case ('matrix') {
+        @if (heat(); as h) {
+          <section class="panel">
+            <div class="hd" style="display: flex; justify-content: space-between; gap: 12px; flex-wrap: wrap; align-items: center">
+              <div>
+                <h2>{{ matrixTitle() }}</h2>
+                <p class="sub">Countries (rows) by departments (columns). Darker means higher.</p>
+              </div>
+              <mat-button-toggle-group aria-label="Measure" [value]="metric()" (change)="setMetric($event.value)" hideSingleSelectionIndicator>
+                <mat-button-toggle value="cost">Total cost</mat-button-toggle>
+                <mat-button-toggle value="count">Employees</mat-button-toggle>
+                <mat-button-toggle value="avg">Average</mat-button-toggle>
+              </mat-button-toggle-group>
+            </div>
+            <div class="bd tblwrap">
+              <table class="data heat">
+                <thead>
+                  <tr><th>Country</th>@for (d of h.departments; track d) { <th class="r">{{ d }}</th> }<th class="r">All</th></tr>
+                </thead>
+                <tbody>
+                  @for (row of h.rows; track row.name) {
+                    <tr>
+                      <td>{{ row.name }}</td>
+                      @for (c of row.cells; track $index) {
+                        <td class="c" [style.background]="c.bg" [title]="c.tip">{{ c.text }}</td>
+                      }
+                      <td class="c tot">{{ row.total }}</td>
+                    </tr>
+                  }
+                </tbody>
+                <tfoot>
+                  <tr><td>All countries</td>@for (f of h.footer; track $index) { <td class="c">{{ f }}</td> }<td class="c">{{ h.grand }}</td></tr>
+                </tfoot>
+              </table>
+            </div>
+          </section>
+        }
+      }
+      @case ('distribution') {
+        @if (distribution(); as d) {
+          <section class="panel">
+            <div class="hd"><h2>Salary distribution</h2><p class="sub">How many employees fall into each pay band, shown in the currency you chose.</p></div>
+            <div class="bd">
+              <app-histogram [distribution]="d" [total]="s.employee_count" />
+              <p class="sub">Bands are fixed at $20k USD-equivalent steps, so bars keep the same shape; their labels convert at the fixed rates when you change currency.</p>
+              <div class="pcts">
+                <div><span>Lowest</span><b>{{ rc.compact(d.percentiles.lowest) }}</b></div>
+                <div><span>25th percentile</span><b>{{ rc.compact(d.percentiles.p25) }}</b></div>
+                <div><span>Median</span><b>{{ rc.compact(d.percentiles.median) }}</b></div>
+                <div><span>75th percentile</span><b>{{ rc.compact(d.percentiles.p75) }}</b></div>
+                <div><span>90th percentile</span><b>{{ rc.compact(d.percentiles.p90) }}</b></div>
+                <div><span>Highest</span><b>{{ rc.compact(d.percentiles.highest) }}</b></div>
+              </div>
+            </div>
+          </section>
+        }
+      }
+      @default {
+        <section class="panel">
+          <div class="hd">
+            <h2>Salary by {{ groupLabel().toLowerCase() }}</h2>
+            <div class="legend"><span><i class="lg-bar"></i>Average</span><span><i class="lg-tick"></i>Median</span></div>
+          </div>
+          <div class="tblwrap">
+            <table class="data">
+              <thead>
+                <tr>
+                  <th>{{ groupLabel() }}</th>
+                  <th class="r">Employees</th>
+                  <th style="min-width: 180px">Average and median</th>
+                  <th class="r">Average</th>
+                  <th class="r">Median</th>
+                  @if (tab() === 'by_job_title') { <th class="r hide-m">Lowest</th><th class="r hide-m">Highest</th> }
+                  <th class="r hide-m">Total cost</th>
+                </tr>
+              </thead>
+              <tbody>
+                @for (g of groups(); track g.key) {
+                  <tr>
+                    <td>
+                      <div class="nm">{{ g.name }}</div>
+                      @if (departmentOf(g)) { <div class="em">{{ departmentOf(g) }}</div> }
+                      @if (currencyOf(g)) { <div class="em">{{ currencyOf(g) }}</div> }
+                    </td>
+                    <td class="r">{{ g.employee_count | number }}</td>
+                    <td><app-salary-bar [average]="g.average" [median]="g.median" [scale]="scale()" [label]="barLabel(g)" /></td>
+                    <td class="r">{{ rc.full(g.average) }}</td>
+                    <td class="r">{{ rc.full(g.median) }}</td>
+                    @if (tab() === 'by_job_title') {
+                      <td class="r hide-m">{{ rc.full(g.lowest) }}</td>
+                      <td class="r hide-m">{{ rc.full(g.highest) }}</td>
+                    }
+                    <td class="r hide-m">{{ rc.compact(g.total_cost) }}</td>
+                  </tr>
+                }
+              </tbody>
+            </table>
+          </div>
+        </section>
+      }
+    }
+  }
+} @else if (loading()) {
+  <div class="spinner-row" role="status">Loading…</div>
+}
+
+<details>
+  <summary>Exchange rates used for cross-country figures</summary>
+  <p class="sub">Fixed rates keep reports repeatable. Units of local currency per 1 USD.</p>
+  <div class="rates">
+    @for (c of lookups()?.currencies ?? []; track c.code) {
+      @if (c.code !== 'USD') { <span><b>{{ c.code }}</b> {{ c.rate_per_usd }}</span> }
+    }
+  </div>
+</details>
