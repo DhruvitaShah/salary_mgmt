@@ -48,7 +48,7 @@ Navigation: **Dashboard, Employees, Salary Insights.** Plus Sign out.
 * A USD equivalent is stored with each employee so sorting and aggregation are plain indexed SQL. `bin/rails salary:recalculate_usd` refreshes it if rates are edited.
 * **Never show a misleading number.** If an employee has a currency with no exchange rate, or the stored USD equivalents are out of date after a rate change, Dashboard and Insights refuse to calculate and say why. They do not skip those employees silently.
 * Editing a salary or currency replaces the current value. No history is kept.
-* Plausibility check on the USD equivalent: $5,000 to $2,000,000 a year, to catch typos such as an extra zero.
+
 
 ## Data model (summary)
 | Table | Purpose |

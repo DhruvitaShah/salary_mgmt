@@ -47,8 +47,6 @@ Exact in PostgreSQL and Ruby (`BigDecimal`). JSON carries numbers, which are exa
 
 ## Product
 
-### Plausibility limits ($5,000 to $2,000,000 a year, in USD terms)
-Catches the typo that matters most in salary data (an extra or missing zero) without needing per-role bands. **Revisit** with job-title salary bands if HR wants warnings instead of errors.
 
 ### Display currency (Dashboard and Insights)
 HR in India reads ₹ in lakh and crore; HR elsewhere reads USD or EUR. The server always reports USD; the browser converts with the same fixed rates, so the choice changes presentation, never the underlying numbers. The salary distribution chart keeps its fixed $20k USD-equivalent bands (so bars never change shape) but its axis, band labels, tooltips and median are converted to the chosen currency.

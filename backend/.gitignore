@@ -1,0 +1,9 @@
+/log/*
+/tmp/*
+!/log/.keep
+!/tmp/.keep
+/public/*
+!/public/.keep
+.env*
+/storage/*
+/config/database.yml

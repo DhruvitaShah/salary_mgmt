@@ -1,0 +1,20 @@
+default: &default
+  adapter: postgresql
+  encoding: unicode
+  pool: <%= ENV.fetch("RAILS_MAX_THREADS", 5) %>
+  host: <%= ENV.fetch("DB_HOST") %>
+  username: <%= ENV.fetch("DB_USER") %>
+  password: <%= ENV.fetch("DB_PASSWORD") %>
+
+development:
+  <<: *default
+  database: salary_mgmt_development
+
+test:
+  <<: *default
+  database: salary_mgmt_test<%= ENV["TEST_ENV_NUMBER"] %>
+
+# In production DATABASE_URL (e.g. from Render, Fly or Heroku) is used.
+production:
+  <<: *default
+  url: <%= ENV["DATABASE_URL"] %>
