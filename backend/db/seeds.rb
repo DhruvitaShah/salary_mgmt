@@ -1,9 +1,23 @@
-# This file should ensure the existence of records required to run the application in every environment (production,
-# development, test). The code here should be idempotent so that it can be executed at any point in every environment.
-# The data can then be loaded with the bin/rails db:seed command (or created alongside the database with db:setup).
-#
-# Example:
-#
-#   ["Action", "Comedy", "Drama", "Horror"].each do |genre_name|
-#     MovieGenre.find_or_create_by!(name: genre_name)
-#   end
+user = User.find_or_initialize_by(
+        email: 'shahdhruvita2012@gmail.com',
+        name: 'Dhruvita Shah',
+        failed_attempts: 0, locked_until: nil)
+user.password = 'Dhruvita@123'
+user.save!
+user
+puts "HR login: #{user.email}"
+
+# 10,000 deterministic sample employees.
+# Re-running is safe: it skips when employees already exist unless FORCE=1.
+count = ENV.fetch("SEED_COUNT", 10_000).to_i
+
+if Employee.exists? && ENV["FORCE"] != "1"
+  puts "Employees already present (#{Employee.count}); skipping. Use FORCE=1 to reseed."
+else
+  if ENV["FORCE"] == "1"
+    Employee.delete_all
+  end
+  started = Time.current
+  total = SeedData::Generator.new(count: count, logger: ->(msg) { puts msg }).call
+  puts "Seeded #{total} employees in #{(Time.current - started).round(1)}s"
+end

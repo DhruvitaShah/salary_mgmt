@@ -16,7 +16,7 @@ class CreateEmployees < ActiveRecord::Migration[7.2]
       # USD equivalent at the fixed rates in config/exchange_rates.yml. Stored so that
       # cross-country sorting and aggregation are plain indexed SQL.
       t.decimal :salary_usd, precision: 15, scale: 2, null: false
-      t.date :salary_effective_date, null: false
+      t.date :salary_effective_date, null: false, default: -> { "CURRENT_DATE" }
 
       t.timestamps
     end
